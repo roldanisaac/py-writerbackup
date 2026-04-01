@@ -1,0 +1,8 @@
+{
+    "usb_destination_path": "My Folder",
+    "extract_source_drive": "",
+    "extract_destination_path": "C:\\Users\\orlan\\Desktop",
+    "unrar_tool_path": "C:\\Program Files\\UnRAR\\UnRAR.exe",
+    "rar_tool_path": "C:\\Program Files\\TotalCommander2021\\Packers\\WinRAR\\Rar.exe",
+    "compressed_extensions": [".zip", ".rar", ".tar", ".tar.gz", ".tgz"]
+}
