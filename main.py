@@ -7,6 +7,7 @@ Two modes:
 
 import json
 import os
+import shutil
 import sys
 import threading
 import time
@@ -360,6 +361,20 @@ class CompressScreen(tk.Frame):
                 self._log(f"  ✔ {drv.letter}:\\ expulsada", SUCCESS)
             else:
                 self._log(f"  ✗ No se pudo expulsar {drv.letter}:\\", ERROR)
+
+        # Clean up: delete compressed files and source folder
+        self._log("Limpiando archivos temporales…")
+        for arc in archive_paths:
+            try:
+                os.remove(arc)
+                self._log(f"  ✔ Eliminado {os.path.basename(arc)}", SUCCESS)
+            except Exception as exc:
+                self._log(f"  ✗ No se pudo eliminar {os.path.basename(arc)}: {exc}", ERROR)
+        try:
+            shutil.rmtree(folder)
+            self._log(f"  ✔ Carpeta eliminada: {os.path.basename(folder)}", SUCCESS)
+        except Exception as exc:
+            self._log(f"  ✗ No se pudo eliminar la carpeta: {exc}", ERROR)
 
         self._log("¡Proceso completado con éxito!", SUCCESS)
         time.sleep(1)  # Give Windows time to complete ejection
