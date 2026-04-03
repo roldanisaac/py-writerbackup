@@ -26,7 +26,7 @@ from drive_manager import RemovableDrive, eject_drive, get_removable_drives
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 
 _DEFAULTS = {
-    "usb_destination_path": "WriterHelper",
+    "usb_destination_path": "My Folder",
     "extract_source_drive": "",
     "extract_destination_path": os.path.join(os.path.expanduser("~"), "Desktop"),
     "unrar_tool_path": r"C:\Program Files\UnRAR\UnRAR.exe",
@@ -110,7 +110,7 @@ class HomeScreen(tk.Frame):
     def _build(self):
         self.columnconfigure(0, weight=1)
 
-        tk.Label(self, text="✍  Writer Helper", bg=BG, fg=FG,
+        tk.Label(self, text="✍  Writer Backup", bg=BG, fg=FG,
                  font=("Segoe UI", 20, "bold")).grid(row=0, column=0, pady=(50, 8))
         tk.Label(self, text="¿Qué deseas hacer?", **DIM_STYLE).grid(row=1, column=0, pady=(0, 40))
 
@@ -294,17 +294,17 @@ class CompressScreen(tk.Frame):
     def _start_thread(self):
         folder = self.folder_var.get().strip()
         if not folder or not os.path.isdir(folder):
-            messagebox.showwarning("Writer Helper",
+            messagebox.showwarning("Writer Backup",
                                    "Selecciona una carpeta válida primero.")
             return
 
         selected = [drv for drv, var in self.drive_vars if var.get()]
         if not selected:
             if not self.drive_vars:
-                messagebox.showwarning("Writer Helper",
+                messagebox.showwarning("Writer Backup",
                                        "No hay unidades extraíbles conectadas.")
                 return
-            messagebox.showwarning("Writer Helper",
+            messagebox.showwarning("Writer Backup",
                                    "Selecciona al menos un dispositivo.")
             return
 
@@ -338,7 +338,7 @@ class CompressScreen(tk.Frame):
 
         errors: list[str] = []
         for drv in drives:
-            dest_dir = os.path.join(drv.path, cfg.get("usb_destination_path", "WriterHelper"))
+            dest_dir = os.path.join(drv.path, cfg.get("usb_destination_path", "My Folder"))
             self._log(f"Copiando a {drv}…")
             try:
                 for arc in archive_paths:
@@ -387,7 +387,7 @@ class CompressScreen(tk.Frame):
         winsound.MessageBeep(winsound.MB_ICONASTERISK)
         top = self.winfo_toplevel()
         top.attributes('-topmost', True)
-        messagebox.showinfo("Writer Helper", msg)
+        messagebox.showinfo("Writer Backup", msg)
         top.attributes('-topmost', False)
 
     def _log(self, msg: str, color: str = FG_DIM):
@@ -518,11 +518,11 @@ class ExtractScreen(tk.Frame):
         src = self.src_var.get().strip()
         dest = self.dest_var.get().strip()
         if not src or not os.path.isfile(src):
-            messagebox.showwarning("Writer Helper",
+            messagebox.showwarning("Writer Backup",
                                    "Selecciona un archivo .zip o .rar válido.")
             return
         if not dest:
-            messagebox.showwarning("Writer Helper",
+            messagebox.showwarning("Writer Backup",
                                    "Selecciona la carpeta de destino.")
             return
         self.action_btn.config(state="disabled")
@@ -562,12 +562,22 @@ class ExtractScreen(tk.Frame):
         self._done()
 
     def _notify(self, msg: str):
-        """Show a topmost messagebox with a system sound."""
+        """Show a topmost messagebox with a system sound, then close app and open extracted folder."""
         winsound.MessageBeep(winsound.MB_ICONASTERISK)
         top = self.winfo_toplevel()
         top.attributes('-topmost', True)
-        messagebox.showinfo("Writer Helper", msg)
+        messagebox.showinfo("Writer Backup", msg)
         top.attributes('-topmost', False)
+        # Close the app and open the extracted folder
+        dest_folder = self.dest_var.get().strip()
+        if dest_folder and os.path.isdir(dest_folder):
+            # Open folder in Windows Explorer
+            os.startfile(dest_folder)
+        # Close the app
+        self.after(100, self._close_app)
+
+    def _close_app(self):
+        self.master.destroy()
 
     def _log(self, msg: str, color: str = FG_DIM):
         self.after(0, lambda: log_msg(self.log, msg, color))
@@ -646,7 +656,7 @@ class ConfigScreen(tk.Frame):
         cfg["unrar_tool_path"] = self.unrar_var.get().strip()
         cfg["rar_tool_path"] = self.rar_var.get().strip()
         save_config(cfg)
-        messagebox.showinfo("Writer Helper", "Configuración guardada.")
+        messagebox.showinfo("Writer Backup", "Configuración guardada.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -656,7 +666,7 @@ class ConfigScreen(tk.Frame):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Writer Helper")
+        self.title("Writer Backup")
         self.configure(bg=BG)
         self.resizable(False, False)
         self.geometry("520x620")
