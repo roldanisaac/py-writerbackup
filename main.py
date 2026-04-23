@@ -531,14 +531,15 @@ class ExtractScreen(tk.Frame):
 
     def _run(self, src: str, dest: str):
         cfg = load_config()
+        actual_dest = os.path.join(dest, "WRITER JOB")
         self._log("Extrayendo archivos…")
         try:
-            ok, msg = extract_archive(src, dest, cfg.get("unrar_tool_path", ""))
+            ok, msg = extract_archive(src, actual_dest, cfg.get("unrar_tool_path", ""))
             if not ok:
                 self._log(msg, ERROR)
                 self._done()
                 return
-            self._log(f"Extracción completada en:\n  {dest}", SUCCESS)
+            self._log(f"Extracción completada en:\n  {actual_dest}", SUCCESS)
         except Exception as exc:
             self._log(f"Error: {exc}", ERROR)
             self._done()
@@ -555,6 +556,7 @@ class ExtractScreen(tk.Frame):
                 else:
                     self._log(f"No se pudo expulsar {drive_letter}:\\.", ERROR)
 
+        self._actual_dest = actual_dest
         self._log("¡Proceso completado!", SUCCESS)
         time.sleep(1)  # Give Windows time to complete ejection
         self.after(0, lambda: self._notify(
@@ -568,10 +570,9 @@ class ExtractScreen(tk.Frame):
         top.attributes('-topmost', True)
         messagebox.showinfo("Writer Backup", msg)
         top.attributes('-topmost', False)
-        # Close the app and open the extracted folder
-        dest_folder = self.dest_var.get().strip()
+        # Open the WRITER JOB folder (actual extraction destination)
+        dest_folder = getattr(self, '_actual_dest', None) or self.dest_var.get().strip()
         if dest_folder and os.path.isdir(dest_folder):
-            # Open folder in Windows Explorer
             os.startfile(dest_folder)
         # Close the app
         self.after(100, self._close_app)
