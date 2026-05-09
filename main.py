@@ -52,15 +52,15 @@ def save_config(cfg: dict) -> None:
 
 # ── Colour palette ────────────────────────────────────────────────────────────
 
-BG = "#1e1e2e"
-PANEL = "#2a2a3e"
-ACCENT = "#7c6af7"
-ACCENT_HOVER = "#9a8fff"
-FG = "#cdd6f4"
-FG_DIM = "#8890a8"
-SUCCESS = "#a6e3a1"
-ERROR = "#f38ba8"
-BORDER = "#45475a"
+BG = "#1a1a1a"
+PANEL = "#252525"
+ACCENT = "#d94f4f"
+ACCENT_HOVER = "#e86464"
+FG = "#f5f5f5"
+FG_DIM = "#8c8c8c"
+SUCCESS = "#66bb6a"
+ERROR = "#ef5350"
+BORDER = "#3d3d3d"
 
 BTN_STYLE = {
     "bg": ACCENT, "fg": "#ffffff", "activebackground": ACCENT_HOVER,
@@ -153,6 +153,7 @@ class CompressScreen(tk.Frame):
         self.folder_var = tk.StringVar()
         self.preview_var = tk.StringVar(value="—")
         self.all_var = tk.BooleanVar(value=True)
+        self.delete_folder_var = tk.BooleanVar(value=True)
         self.drive_vars: list[tuple[RemovableDrive, tk.BooleanVar]] = []
         self._build()
 
@@ -219,6 +220,15 @@ class CompressScreen(tk.Frame):
             font=("Segoe UI", 10),
         )
         self.all_chk.grid(row=row, column=0, sticky="w", padx=16, pady=(8, 4))
+        row += 1
+
+        # "Delete folder after compression" checkbox
+        tk.Checkbutton(
+            self, text="Eliminar carpeta original tras comprimir",
+            variable=self.delete_folder_var,
+            bg=BG, fg=FG, selectcolor=PANEL, activebackground=BG, activeforeground=FG,
+            font=("Segoe UI", 10),
+        ).grid(row=row, column=0, sticky="w", padx=16, pady=(0, 4))
         row += 1
 
         # Drive list container (scrollable-ish)
@@ -370,11 +380,14 @@ class CompressScreen(tk.Frame):
                 self._log(f"  ✔ Eliminado {os.path.basename(arc)}", SUCCESS)
             except Exception as exc:
                 self._log(f"  ✗ No se pudo eliminar {os.path.basename(arc)}: {exc}", ERROR)
-        try:
-            shutil.rmtree(folder)
-            self._log(f"  ✔ Carpeta eliminada: {os.path.basename(folder)}", SUCCESS)
-        except Exception as exc:
-            self._log(f"  ✗ No se pudo eliminar la carpeta: {exc}", ERROR)
+        if self.delete_folder_var.get():
+            try:
+                shutil.rmtree(folder)
+                self._log(f"  ✔ Carpeta eliminada: {os.path.basename(folder)}", SUCCESS)
+            except Exception as exc:
+                self._log(f"  ✗ No se pudo eliminar la carpeta: {exc}", ERROR)
+        else:
+            self._log(f"  — Carpeta conservada: {os.path.basename(folder)}", FG_DIM)
 
         self._log("¡Proceso completado con éxito!", SUCCESS)
         time.sleep(1)  # Give Windows time to complete ejection
@@ -667,10 +680,14 @@ class ConfigScreen(tk.Frame):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+        self.withdraw()  # hide until fully built
         self.title("Writer Backup")
         self.configure(bg=BG)
         self.resizable(False, False)
-        self.geometry("520x620")
+        _ico = os.path.join(os.path.dirname(__file__), "images", "app.ico")
+        if os.path.isfile(_ico):
+            self.iconbitmap(_ico)
+        self.geometry("520x590")
         self._current: tk.Frame | None = None
         # ttk theme tweaks
         style = ttk.Style(self)
@@ -678,6 +695,7 @@ class App(tk.Tk):
         style.configure("TProgressbar", troughcolor=PANEL, background=ACCENT,
                         borderwidth=0, thickness=6)
         self.show(HomeScreen)
+        self.deiconify()  # show now that content is ready
 
     def show(self, screen_cls):
         if self._current:
